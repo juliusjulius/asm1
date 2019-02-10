@@ -1,0 +1,88 @@
+TITLE MASM Template						(main.asm)
+;nacitaj postupnost cisel
+;vypis minimum
+INCLUDE Irvine32.inc
+.data
+
+hlaska1 DB "Nacitaj postupnost 5 cisel:",0ah,0dh,0
+najmensie DW ?
+pole dw 5 dup(?)
+
+.code
+
+nacitajCisla PROC
+
+	xor ecx,ecx
+	xor edx,edx
+	xor edi,edi
+
+	mov ecx,lengthof pole
+
+	mov edx,offset hlaska1
+	call WriteString
+
+	Cyklus:
+		call ReadInt
+		mov pole[edi],ax
+		add edi,TYPE pole
+		loop Cyklus
+
+	KoniecProc:
+		ret
+
+nacitajCisla ENDP
+
+zistiNajmensie PROC
+
+	xor edi,edi
+	xor eax,eax
+
+	mov ax,pole[edi]
+	mov najmensie,ax			;vlozim tu prve
+	
+	xor edi,edi
+	inc edi
+	xor ecx,ecx
+	mov ecx,lengthof pole-1
+
+	Prechadzaj:
+		mov ax,pole[edi]
+		inc edi
+		cmp ax,najmensie
+		jl nasielSomMensie
+		Pokracuj: 
+			loop Prechadzaj
+			jmp KoniecProce
+
+	
+	nasielSomMensie:
+		mov najmensie,ax
+		jmp Pokracuj
+
+	KoniecProce:
+		ret
+
+zistiNajmensie ENDP
+
+main PROC
+	call Clrscr 
+
+	call nacitajCisla
+
+	call zistiNajmensie
+
+	xor eax,eax
+	movsx eax, najmensie			;prida priznak znamienka
+	
+	mov najmensie,0					;vycistim
+	mov najmensie,ax				;vlozim aby mozem vypisať
+	
+	xor edx,edx
+	mov edx,offset najmensie
+	call WriteInt
+
+	Koniec:
+		exit
+	
+main ENDP
+END main

@@ -1,0 +1,69 @@
+TITLE MASM Template						(main.asm)
+
+INCLUDE Irvine32.inc
+
+.data
+Retazec DB 20 dup (?)
+
+.code
+
+;Nacitajte retazec z klavesnice a najdite v nom najvacsi znak. Potom na mieste toho najv. znaku rozdelte retazec na dva riadky.
+;napr. "Peter" sa vypise	"Pet"
+;							"er"
+
+main PROC
+	call Clrscr
+
+	mov edi,0
+	mov eax,0
+	mov edx,offset Retazec
+	mov ecx,20
+	call ReadString
+
+	mov al,[edx+edi];				vloz do al prvy znak retazca
+	mov bl,al;						vloz tento znak do bl ako docasne maximum
+	cmp al,0;						ak si nezadal nic, prejdi na koniec
+	je Koniec
+
+	Opakuj:
+		inc edi;						zvys index na dalsi znak
+		mov ah,[edx+edi];				vloz dalsi znak do ah
+		cmp ah,0;						ak sa uz skontrolovali vsetky znaky, tak prejdi na vypis
+		je Vypis
+		cmp ah,al;						porovnaj aktualny znak s prvym
+		jg Vacsi;						ak je vacsi, mas nove maximum a skoc na Vacsi
+		jmp Opakuj;						inak opakuj kontrolu
+
+	Vacsi:
+		cmp ah,bl;						porovnaj nove maximum s docasnym
+		jle Opakuj;						ak je mensie alebo rovne ako docasne, opakuj kontrolu
+		mov bl,ah;						inak sa naslo nove maximum, odloz si ho teda do bl
+		jmp Opakuj;						opakuj kontrolu
+
+	Vypis:
+		mov edi,0
+		mov eax,0
+		mov edx,offset Retazec
+	OpakujVypis:
+		mov al,[edx+edi];				vloz prvy znak z retazca do al
+		cmp al,0;						ak uz si na konci retazca, skoc na koniec
+		je Koniec
+		call WriteChar;					inak vypis aktualny znak
+		cmp al,bl;						porovnaj aktual. znak s maximom - ak su rovne, tak odriadkuj
+		je NovyRiadok
+		inc edi;						inak zvys index na dalsi znak a opakuj vypis
+		jmp OpakujVypis
+
+	NovyRiadok:
+		mov al,0Dh
+		call WriteChar
+		mov al,0Ah
+		call WriteChar
+		inc edi;						zvys index na dalsi znak a opakuj vypis
+		jmp OpakujVypis
+
+	Koniec:
+		exit
+main ENDP
+
+END main

@@ -1,0 +1,96 @@
+TITLE MASM retazec              (main.asm)
+;nacitam retazec ak ma aprny pocet pismen napisem, ak nie napisem
+;ak sa nachadza cislica napise, ak nie napise
+INCLUDE Irvine32.inc
+
+.data
+retazec DB 20 dup(?)
+;pocet DD ?
+zadajteRetazec DB "Zadajte retazec: ", 0Ah, 0Dh, 0
+hlaska1 db "Retazec ma parny pocet znakov.", 0Ah, 0Dh, 0
+hlaska2 db "Retazec ma neparny pocet znakov.", 0Ah, 0Dh, 0
+hlaska3 db "V retazci sa nachadza cislica.", 0Ah, 0Dh, 0
+hlaska4 db "V retazci sa nenachadza cislica.", 0Ah, 0Dh, 0
+
+.code
+nacitaj PROC
+	xor edx,edx
+	xor eax,eax
+
+	;nacitanie halsky
+	mov edx, offset zadajteRetazec
+	call WriteString
+
+	;nacitanie retazca
+	mov edx,offset retazec			;adressa
+	mov ecx,length retazec			;maximum
+	call ReadString					;eax
+
+	;zistovanie parnosti
+	mov dl, 2
+	div dl
+	cmp ah,0
+	je Parne
+	jne Neparne
+
+Parne:
+	lea edx, hlaska1
+	call WriteString
+	jmp Pokracuj
+
+Neparne:
+	lea edx, hlaska2
+	call WriteString
+	jmp Pokracuj
+
+Pokracuj:
+	xor edi,edi
+	xor edx,edx
+	mov ecx, lengthof retazec
+
+Cyklus:
+	lea edx, retazec
+	mov al, [edx+edi]
+	cmp al,"0"
+	je Jecislica
+	cmp al,"1"
+	je Jecislica
+	cmp al,"2"
+	je Jecislica
+	cmp al,"3"
+	je Jecislica
+	cmp al,"4"
+	je Jecislica
+	cmp al,"5"
+	je Jecislica
+	cmp al,"6"
+	je Jecislica
+	cmp al,"7"
+	je Jecislica
+	cmp al,"8"
+	je Jecislica
+	cmp al,"9"
+	je Jecislica
+
+	inc edi
+	loop Cyklus
+
+NieJeCislica:
+	lea edx,hlaska4
+	call WriteString
+	jmp Koniec
+
+Jecislica:
+	lea edx,hlaska3
+	call WriteString
+
+Koniec:
+ret
+nacitaj ENDP
+ 
+main PROC
+	call Clrscr
+	call nacitaj
+	exit
+main ENDP
+END main

@@ -1,0 +1,56 @@
+TITLE MASM Template						(mainDruhy.asm)
+
+INCLUDE Irvine32.inc
+.data
+	hlaska1 DB "Zadajte cislo v deistkovej sustave: ", 0ah, 0dh, 0
+	hlaska2 DB "Zadali ste zle cislo ", 0ah, 0dh, 0
+	retazec DB 20 Dup(?)
+	prevedene DB 20 Dup(?)
+	delitel DW 2
+.code
+
+main PROC
+	call Clrscr
+	xor ecx,ecx
+	xor edx,edx
+	mov edx,offset hlaska1
+	call WriteString
+	call ReadInt			;v eax mam cislo ktore idem prevadzat
+
+	mov bx, delitel			;cislo ktorym budeš deliť
+	xor esi, esi			;vynulujes esi
+Cyklus:
+	xor dx, dx		
+	test eax, eax			;tymto zistíš, akú hodnotu maju bity v eax
+							;1010 a 1010 co je vlastne vo vysledku 0 a keby bolo -10 tak tam nastane posun a na posledny bit sa pridá este jednotka 
+							;takze by sa porovnavalo 1 1010 a 1010 kde v tomto prípade by sa SF nastavilo na 1 kedze to je zaporne cislo
+	jns NiejeZap			;skok ak SF=0 takze ak je kladné 
+	mov edx,offset hlaska2
+	call WriteString
+	xor eax,eax
+	xor edx,edx
+	jmp Koniec
+NiejeZap:
+	div delitel			
+	or dl, 30h				;NEROZUMIEEEEEEEEEEEM
+	mov prevedene[esi], dl
+	inc esi
+	cmp ax, 0
+
+	jnz Cyklus
+	
+	
+Vypis:
+	mov al, prevedene[esi-1]
+	call WriteChar
+	dec esi
+	cmp esi, 0
+	jnz Vypis
+	mov al, 'h'
+	call WriteChar
+
+Koniec:
+	exit
+
+main ENDP
+END main

@@ -1,0 +1,49 @@
+TITLE Teploty	(main.asm)
+;po zadani casu sa zobrazi teplota v danom case
+;vypise MAX teplotu
+INCLUDE Irvine32.inc
+.data
+	teploty DW 12,27,33,28,10,21
+	casy DW 1,4,7,9,12,15
+	zadajCas DB "Zadaj cas: ", 0Dh, 0Ah, 0
+	teplotaVCase DB "Teplota je:" , 0Dh, 0Ah, 0
+.code
+
+nacitaj PROC
+	xor edx, edx	;vynuluje edx 
+	xor eax, eax
+	xor ebx, ebx
+	mov edx, offset zadajCas	;do edx da adresu retazca
+	call WriteString	;writestring edx 
+	call ReadInt ; read eax 
+	mov ebx, eax ;precitany int da do ebx registra pretoze ten sa neprepisuje
+	
+	xor edi, edi
+	xor eax, eax	
+	mov ecx, lengthof casy ;aby vedel kedy ma loop skoncit
+
+Cyklus:
+	mov ax, casy[edi*2] ; edi pretoze indexujem a *2 pretoze casy je dw
+	cmp ax, bx ;ax-bx
+	je Zapis
+	inc edi
+	loop Cyklus
+	jmp Koniec
+
+Zapis:
+	call WriteInt ;eax
+	call Crlf	;novy riadok
+	mov edx, offset teplotaVCase
+	call WriteString
+	xor eax, eax
+	mov ax, teploty[edi*2]
+
+	call WriteInt
+Koniec:
+ret
+nacitaj ENDP
+main PROC
+	call nacitaj
+	exit
+main ENDP
+END main

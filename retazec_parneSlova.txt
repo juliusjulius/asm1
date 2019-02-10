@@ -1,0 +1,125 @@
+TITLE MASM Template						(main.asm)
+
+INCLUDE Irvine32.inc
+.data
+
+hlaskaUvod DB "Zadajte vetu:",0ah,0dh,0
+hlaskaKoniec DB "Pocet slov s parnym poctom pismen: ",0ah,0dh,0
+retazec DB 80 dup(?)
+slovo DB 80 dup(?)
+
+pocetParnychSlov DW ?
+
+.code
+
+odriadkuj MACRO
+	push eax
+	mov al, 0ah
+	call writechar
+	mov al, 0dh
+	call writechar
+	pop eax
+endm
+
+main PROC
+	call Clrscr;
+
+	xor ebx,ebx
+	mov pocetParnychSlov,0
+
+	;vypisem hlasku nech napise retazec
+	mov edx,offset hlaskaUvod
+	call WriteString
+
+	;nacitavanie retazca
+	mov edx,offset retazec
+	mov ecx,length retazec
+	call ReadString				;nacitam vetu
+
+	;priprava na prechadzanie znakov
+	mov ecx,lengthof retazec
+	xor edi,edi
+	xor edx,edx
+
+	;hlavny cyklus
+	Cyklus:
+		mov al,retazec[edi]
+		
+		cmp al,'.'
+		je narazilNaBodku
+		mov [slovo+bx],al		;ukladam si slovo, ak bude parne, tak ho potom vypisem
+		
+		cmp al,20h				;opytam sa ci je medzera
+		je Medzera
+
+		inc bl					;ratam pocet pismen
+		inc edi
+		loop Cyklus
+		jmp Koniec
+
+	narazilNaBodku:
+		mov eax,ebx
+		xor ebx,ebx				;vynulujem aby mozem delit
+		
+		;overim este posledny znak
+		mov dx,0				;sem mi zostane zvysok po deleni
+		mov bx,2				;cim chcem delit
+		div bx					;delim eax cislom v bx
+
+		cmp	dx,0
+		je ParneKoniec
+		jmp vypisVysledok
+
+	Medzera:
+		inc edi					;aby bezal cyklus potom
+
+		mov eax,ebx
+		xor ebx,ebx				;vynulujem aby mozem delit
+		
+		mov dx,0				;sem mi zostane zvysok po deleni
+		mov bx,2				;cim chcem delit
+		div bx					;delim eax cislom v bx
+
+		cmp	dx,0
+		je ParnePokracuj		;ak po vydeleni ostane 0 skoc na parnepokracuj
+		jmp Cyklus
+
+	ParnePokracuj:
+
+		xor eax,eax
+		xor edx,edx
+		mov al,slovo
+		mov edx,offset slovo
+		call WriteString
+		;sem musim vycistit to slovo
+		odriadkuj
+
+		xor ebx,ebx				;vynulujem pre dalsie pocitanie
+		add pocetParnychSlov,1
+		jmp Cyklus
+
+	ParneKoniec:
+		xor eax,eax
+		xor edx,edx
+
+		mov al,slovo
+		mov edx,offset slovo
+		call WriteString
+		;sem musim vycistit to slovo
+		odriadkuj
+
+		add pocetParnychSlov,1
+		jmp vypisVysledok
+
+	vypisVysledok:
+		mov edx, offset hlaskaKoniec
+		call WriteString
+
+		mov ax,pocetParnychSlov
+		call WriteInt
+		
+	Koniec:
+		exit
+	
+main ENDP
+END main

@@ -1,0 +1,194 @@
+TITLE MASM Retazec						(main.asm)
+;nacita retazec tvoreny malymi pismenami abecedy, prekazde pismeno vypise,koľko pismen je v retazci od neho mensich
+;napr pre ahoj vystup 0,1,3,2
+;upravte že retazec vygenerujete pomocou procedury RandomRange
+;upravte ze vysledok zapisete do textoveho suboru
+INCLUDE Irvine32.inc
+.data
+
+hlaskaUvod DB "Napiste retazec:",13,10,0
+zlyRetazec DB "Zadali ste zly retazec, skuste to znova",13,10,0
+retazec DB 80 dup(?)
+dlzkaRetazca DD ?
+
+;generujRetazec PROTO paAdresa:Dword
+
+pismeno DB ?
+
+.code
+;----- MACRO ----
+odriadkuj MACRO
+	push eax
+	mov al, 0ah
+	call writechar
+	mov al, 0dh
+	call writechar
+	pop eax
+endm
+
+medzera MACRO
+	push eax
+	mov al, 20h
+	call writechar
+	pop eax
+endm
+
+;---------------------
+
+;Procedura na generovanie nahodneho textu z malych pismen
+generujRetazec PROC 
+	call Randomize
+	
+	mov ecx,5							;aky dlhy bude retazec
+	xor edi,edi							;vynulujem edi
+	mov retazec,0						;vycistim retazec, to tu asi ani netreba
+
+	cykluss:	
+		mov eax, 25						;chcem cislo od 0 po 25 lebo potrebujem cisla od 97 po 122 (ASCII a-z)
+		call randomRange				;vygeneruje cislo 
+		add eax,97						;priratam 97, cize z 0 bude 97 (a) atď
+		mov retazec[edi],al				;hodim si to na poziciu v retazci
+		inc edi							;zvysim edi
+		loop cykluss					;opakujem cyklus
+
+	mov ecx,5							;nastavim pre dalsie pouzitie v dalej procedure ecx (aka je dlzka)
+	xor ebx,ebx							;vynulujem ebx
+	mov ebx,ecx							;uchovam si dlzku v ebx, lebo ju este potrebujem po overeni znakov mať, po overeni sa mi ecx vynuluje, ale este potrebujem ratat
+	
+ret
+generujRetazec ENDP
+
+;metodu ktorú volám keď chcem zadat retazec z klavesnice, uloha a)
+nacitajRetazec PROC
+
+	xor eax,eax							;vynuluje
+	xor edx,edx							;vynulujem
+
+	mov edx,offset hlaskaUvod			;idem vypisat hlasku nech zadá retazec
+	call WriteString					;vypisem
+
+	xor edx,edx							;vynulujem
+	mov retazec,0						;vynulujem
+	
+	mov edx,offset retazec				;nacitam retazec
+	mov ecx,lengthof retazec - 1		;ak nechapes, daj si google a vygoogli msjc readstring
+	call ReadString
+
+	xor ecx,ecx							;vynulujem ecx
+	mov ecx,eax							;do ecx si dam dlzku naisaneho retazca
+
+	xor ebx,ebx							;vynulujem ebx
+	mov ebx,ecx							;plati to iste co v predoslej metode o uchovani dlzky
+	xor eax,eax
+
+	Koniec:
+		ret
+
+nacitajRetazec ENDP
+
+overRetazec PROC
+
+	xor edi,edi							;vynulujem
+
+	overPismena:						;metoda na overenie, ci su to male pismena
+		mov al,retazec[edi]				;do al si vlozim pismeno na pozicii edi
+		inc edi							;zvysim edi
+		cmp al,'a'						;porovnam znak v al s a
+		jge overDalej					;ak je to v ascii vacsie pismeno tak je to spravne, overuj dalsie pismeno
+		jmp NespravnyRetazec			;ak nie, vypis ze zly retazec
+
+		PokracujOverovanie:				;Pokracuj
+			loop overPismena			;opakuj
+			jmp KoniecP					;skoc na koniec procedury, je overene vsetko
+
+	NespravnyRetazec:					;len pre vypisanie ze ide o nespravny retazec a pyta znova zadat retazec
+		xor edx,edx
+		mov edx,offset zlyRetazec
+		call WriteString
+		odriadkuj
+		call nacitajRetazec
+
+	overDalej:							;overujem ci to je v ascii mensie pismeno ako z
+		cmp al,'z'
+		jbe PokracujOverovanie			;ako ano, skoc naspät na overovanie dalsieho znaku
+		jmp NespravnyRetazec			;ak nie, skoc na NespravnyRetazec
+
+	KoniecP:
+		ret
+
+overRetazec ENDP
+
+;Procedura ktora rata kolko znakov je vyssie v abecede
+algoritmus PROC
+
+	xor edi,edi							;vynulujem
+
+	mov edx,offset retazec				;vypisem retazec, ktorý overujem
+	call WriteString
+	odriadkuj
+
+	mov ecx,ebx							;nastavim si ecx z ebx, ktory som si odlozila, kedze ecx sa mi vynuloval overovanim pismen
+	mov dlzkaRetazca,ebx				;do premennej si ulozim taktiez dlzku aby viem pokial mam overovat
+	xor eax,eax							;vynulujem
+	xor edi,edi							;vynulujem
+	mov pismeno,0						;vynulujem
+	xor ebx,ebx							;vynulujem
+
+	Cyklus:
+		mov bl,0						;sem budem ratat
+		mov al,retazec[edi]				;do al vlozim pismeno
+		mov pismeno,al					;hodim si to do premennej aby mozem porovnavat neskor
+		inc edi							;zvysim edi
+		xor esi,esi						;vynulujem si esi
+		
+		zistiMensiePismena:				;sem budem prechadzat vsetky pismena, akoby umelo vytvoreny cyklus skokmi
+			xor eax,eax					;vynulujem eax
+			mov al,retazec[esi]			;hodim si znak na esi pozicii do al
+			inc esi						;zvysim esi pre dalsi cyklus
+			cmp al,pismeno				;porovavam pismena
+			jb ZvysPocet				;ak je vyssie v abecede tak skocim na ZvysPocet
+
+			PokracujZistiMensie:		;pokracujem
+				cmp esi,dlzkaRetazca	;spytam sa, ci uz je na konci retazca, cize overil pismeno so vsetkymi v retazci
+				je PokracujCyklus		;ak ano skocim na PokracujCyklus
+				jmp zistiMensiePismena	;ak nie, este nie je na konci, pokracuje v overovani
+
+		PokracujCyklus:					;vypise pocet vyskytov a pokracuje na dalsie pismeno
+			call vypisPocet				;vypise pocet
+			PokracujKoniecCyklu:		;pokacuje hlavny cyklus
+				loop Cyklus
+				exit					;ak presiel vsetky pismena, exitne
+		
+	ZvysPocet:							;zvysi pocitadlo
+		add bl,1
+		jmp PokracujZistiMensie			;skoci naspat kde skoncil
+
+	VypisPocet:
+		xor eax,eax						;vynuluje eax
+		mov eax,ebx						;hodim si pocet do eax, pripravim na vypis
+		xor ebx,ebx						;vynulujem pocitadlo
+
+		call WriteInt					;vypisem cislo
+		medzera							;napise medzeru
+		jmp PokracujKoniecCyklu			;pokracuje
+
+	KoniecAlgoritmu:
+		ret
+	
+
+algoritmus ENDP
+
+
+main PROC
+	call Clrscr							;vycisti obrazovku
+
+	;call nacitajRetazec				;toto zavolam ak chcem vstup z klavesnice
+	call generujRetazec					;toto ak sa ma vygenerovat retazec
+
+	call overRetazec					;overi ci su to male pismena
+
+	call algoritmus						;spusti pocitaci algoritmus
+
+	exit
+main ENDP
+END main

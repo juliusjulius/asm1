@@ -1,0 +1,90 @@
+TITLE MASM Otocenie retazca						(main.asm)
+INCLUDE Irvine32.inc
+
+.data
+DLZKA EQU 150
+RetazecVstup DB DLZKA dup(?)
+
+.code
+newLine PROC
+	push eax
+	mov al,0dh				;novy riadok			
+	call WriteChar			;
+	mov al,0ah				;
+	call WriteChar			;
+	pop eax	
+	ret	
+newLine ENDP
+
+otocenieRetazca PROC USES eax esi edi ecx edx paDlzka,paOffset
+;parametre cez proceduru - za PROC paDlzka,paOffset
+	mov ecx,paDlzka
+	mov edx,paOffset
+
+;idem vyberat parametre sam
+;	mov ebp,esp
+;	mov ecx,[ebp+4]	;dlzka
+;	mov edx,[ebp+8]	;offset retazca
+;zaloha registrov / alebo za PROC dam USES eax esi edi ecx edx
+;	push eax;	
+;	push esi
+;	push edi
+;	push ecx
+;	push edx
+
+	;prejdenie retazca po pismenach
+		xor esi,esi;		;counter na nulu
+		DalsiePismeno:
+			xor ax,ax
+			mov al,[edx+esi]		
+			push ax
+			inc esi
+		loop DalsiePismeno;
+
+	;nacitanie zo zasobnika
+		mov ecx,esi		;dlzka sa ulozi do ecx
+			;v esi je index posledneho znaku
+		xor edi,edi
+		VyberamPismeno:
+			xor ax,ax
+			pop ax
+			mov [edx+edi],al
+			inc edi
+		loop VyberamPismeno
+
+;vratenie registrov zo zalohy
+;	pop edx
+;	pop ecx
+;	pop edi
+;	pop esi
+;	pop eax
+;treba popnut 8 bytov(pushoval som ecx,edx pred volanim procedury)
+;	ret 8
+;alebo nemusim, ak mam parametre cez PROC
+	ret
+otocenieRetazca ENDP
+
+main235 PROC
+	call Clrscr
+
+	;nacitanie retazca
+	nacitatRetazec:
+		mov ecx,DLZKA				;max dlzka
+		mov edx, OFFSET RetazecVstup
+		call ReadString
+		;eax = aktualna dlzka
+
+		call newLine		
+
+	push edx	;offset
+	push eax	;dlzka
+	call otocenieRetazca
+
+	call WriteString
+	
+	Koniec:
+		call ReadChar
+			exit
+main235 ENDP
+
+END main235

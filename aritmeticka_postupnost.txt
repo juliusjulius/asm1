@@ -1,0 +1,93 @@
+TITLE MASM Template						(main.asm)
+
+INCLUDE Irvine32.inc
+.data
+
+pole dw 4 dup(?)									;postupnost 3 cisel								
+dlzka equ ($-pole)/2
+rozdiel dw ?
+
+hlaska1 db "Zadaj postupnost 4 cisel: ",0ah,0dh,0
+hlaska2 db "Je aritmeticka",0ah,0dh,0
+hlaska3 db "Nie je aritmeticka",0ah,0dh,0
+
+.code
+
+nacitajCisla PROC
+	
+	xor edx,edx
+	xor edi,edi
+	xor eax,eax
+	xor ecx,ecx
+
+	mov ecx, lengthof pole							;do kedy ma ist Cyklus
+
+	;vypisanie hlasky
+	mov edx, offset hlaska1
+	call WriteString
+
+	;nacita zadane cisla do pola
+	Cyklus: 
+		call ReadInt
+		mov pole[edi*2], ax
+		inc edi
+		loop Cyklus
+
+
+nacitajCisla ENDP
+
+zistiRozdiel PROC
+
+	xor edi,edi
+
+	mov ax,pole[edi*2]								;1.cislo pola
+	inc edi
+	mov bx,pole[edi*2]								;2.cislo pola
+	sub ax,bx										;ich rozdiel
+
+	mov rozdiel,ax
+
+zistiRozdiel ENDP
+
+PrejdiPrvky PROC
+	
+	xor edi,edi
+	mov ecx,dlzka - 1
+
+	Cyklus:
+		mov ax,pole[edi*2]
+		inc edi
+		mov bx,pole[edi*2]
+		sub ax,bx
+
+		cmp ax,rozdiel
+		jne NieJeAritmeticka
+		loop Cyklus
+		jmp JeAritmeticka
+
+	NieJeAritmeticka:
+		mov edx, offset hlaska3
+		call WriteString
+		jmp Koniec
+
+	JeAritmeticka:
+		mov edx, offset hlaska2
+		call WriteString
+		jmp Koniec
+
+	Koniec:
+		exit
+
+PrejdiPrvky ENDP
+
+main PROC
+	call Clrscr
+
+	call nacitajCisla
+
+	call zistiRozdiel
+
+	call PrejdiPrvky
+	
+main ENDP
+END main

@@ -1,0 +1,54 @@
+TITLE MASM Template						(main.asm)
+
+INCLUDE Irvine32.inc
+.data
+retazec DB "Ahojte volam sa Alexa", 0Dh, 0ah,0
+oznam DB "Pocet vyskytov pismena",0
+hladanyZnak DB ?
+.code
+main PROC
+	call Clrscr
+	mov edx, offset retazec
+	call WriteString
+	call ReadChar
+	mov hladanyZnak, al
+	
+	mov edi, 0
+	mov bl, '0'
+
+	Nacitanie:
+	mov al, retazec[edi]
+	cmp  al, hladanyZnak
+	je Prirataj
+	cmp al,0
+	je Koniec
+	inc edi
+	jmp Nacitanie
+
+
+	Prirataj:
+	inc bl
+	inc edi
+	jmp Nacitanie
+
+
+	Koniec:
+	mov edx, offset oznam
+	call WriteString
+	mov al, 0Dh
+	call WriteChar
+	mov al, 0ah
+	call WriteChar
+	mov al, hladanyZnak
+	call WriteChar
+	mov al, 0Dh
+	call WriteChar
+	mov al, 0ah
+	call Writechar
+	mov al, bl
+	call WriteChar
+	exit
+
+	main ENDP
+
+END main

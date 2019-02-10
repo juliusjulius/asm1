@@ -1,0 +1,130 @@
+TITLE MASM Template						(main.asm)
+
+INCLUDE Irvine32.inc
+.data
+
+hlaskaUvod DB "Zadajte vetu:",0ah,0dh,0
+hlaskaKoniec DB "Pocet slov s vyskytom sa: ",0ah,0dh,0
+retazec DB 80 dup(?)
+slovo DB 80 dup(?)
+
+pocetSlov DW ?
+
+.code
+
+odriadkuj MACRO
+	push eax
+	mov al, 0ah
+	call writechar
+	mov al, 0dh
+	call writechar
+	pop eax
+endm
+
+nacitajVetu PROC
+	;vypis hlasku
+	mov edx,offset hlaskaUvod
+	call WriteString
+
+	;nacitavanie retazca
+	mov edx,offset retazec		;read z edx do eax
+	mov ecx,length retazec - 1	;80 znakov tak potrebujem o jendu menej 
+	call ReadString				;nacitam vetu do retazca a do eax hodim iba pocet znakov 
+
+	mov ecx,eax					;hodim si tam pocet znakov aby viem ako dlho pojde cyklus
+
+	KoniecNacitania:
+		ret
+
+nacitajVetu ENDP
+
+main PROC
+	call Clrscr
+
+	;vynulujem
+	mov pocetSlov,0
+
+	call nacitajVetu
+
+	;mov edi,ecx asi netreba
+
+	xor edi,edi
+	xor esi,esi
+	xor ebx,ebx
+
+	;hlavny cyklus
+	Cyklus:
+		mov al,retazec[edi]
+		add edi,TYPE retazec
+		cmp al,20h
+		je overSlovo
+		mov [slovo+esi],al		;ak nie je medzera vyskladam si slovo 
+
+		inc bl;					;naratavam si kolko krat pojdem
+		inc esi
+
+		cmp al,'.'
+		je overSlovo
+
+		KoniecHlavnehoCyklu:
+			loop Cyklus
+			jmp Koniec
+		
+
+	overSlovo:
+
+		xor esi,esi						;slovo uz je vyskladane a
+
+		OverovaniePismen:
+			cmp esi,ebx					;po kial konci slovo
+			jg KoniecOverovania
+			
+			mov al,slovo[esi]
+			add esi,TYPE slovo
+			cmp al,'s'
+			je overDalsie
+			jmp OverovaniePismen
+
+		overDalsie:
+			mov al,slovo[esi]
+			cmp al,'a'
+			je zvysPocet
+			jmp OverovaniePismen
+
+		zvysPocet:
+			add pocetSlov,1
+			xor ebx,ebx
+			jmp KoniecHlavnehoCyklu
+
+		KoniecOverovania:
+			
+			mov esi,edi							;ulozim si
+			mov ebx,ecx
+
+			;vycistenie strig variable
+			cld									; vycistim slovo
+			lea edi, slovo
+			mov ecx, (SIZEOF slovo)
+			mov al, 0
+			rep stosb 
+
+			mov edi,esi							;nahodim naspat
+			mov ecx,ebx
+			xor esi,esi
+
+			jmp KoniecHlavnehoCyklu
+				
+		odriadkuj
+		jmp KoniecHlavnehoCyklu
+
+	Koniec:
+		xor edx,edx
+		mov edx,offset hlaskaKoniec
+		call WriteString
+		xor eax,eax
+		mov ax, pocetSlov
+		call WriteInt
+		exit
+	
+main ENDP
+END main
