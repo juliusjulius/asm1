@@ -1,0 +1,105 @@
+TITLE MASM Template						(main.asm)
+
+INCLUDE Irvine32.inc
+INCLUDE Macros.inc
+.data
+
+
+PoctyObyvatelov DD 30712, 90850, 39494, 33075, 72451, 96742, 61526, 57044, 16070, 36024, 156618
+
+Bytca DB "Bytca", 0
+Cadca DB "Cadca", 0
+DolnyKubin DB "Dolny Kubin", 0
+KysNovMesto DB "Kysucke Nove mesto", 0
+LipMikulas DB "Liptovsky Mikulas", 0
+Martin DB "Martin", 0
+Namestovo DB "Namestovo", 0
+Ruzomberok DB "Ruzomberok", 0
+TurTeplice DB "Turcianske Teplice", 0
+Tvrdosin DB "Tvrdosin", 0
+Zilina DB "Zilina", 0
+
+Mesta DD Bytca, Cadca, DolnyKubin, KysNovMesto, LipMikulas, Martin, namestovo, Ruzomberok, TurTeplice, Tvrdosin, Zilina
+PocetMiest DD 11
+
+VysledokA DW 0
+VysledokC DW 0
+
+Sto DW 100
+
+.code
+main PROC
+	call Clrscr
+	finit
+
+	;------------Uloha A------------
+	mWriteln "Okresy, ktore maju aspon 50000 obyvatelov:"
+
+	mov EBX, Mesta
+	mov ECX, PocetMiest
+	xor ESI, ESI
+
+	MestaLoopA:
+		mov EAX, dword ptr [PoctyObyvatelov + 4*ESI]
+		cmp EAX, 50000
+		jae JeViacA
+
+		MestaLoopPokracujA:
+			inc ESI
+			loop MestaLoopA
+			jmp UlohaC
+
+
+	JeViacA:
+		mov EDX, [Mesta + 4*ESI]
+		call WriteString
+		call Crlf
+
+		inc VysledokA
+		jmp MestaLoopPokracujA
+
+
+	;------------Uloha C------------
+	UlohaC:
+		mov ECX, PocetMiest
+		xor ESI, ESI
+
+		MestaLoopC:
+			mov EAX, dword ptr [PoctyObyvatelov + 4*ESI]
+			cmp EAX, 50000
+			ja JeViacC
+
+			MestaLoopPokracujC:
+				inc ESI
+				loop MestaLoopC
+				jmp VypisVystup
+
+		JeViacC:
+			inc VysledokC
+			jmp MestaLoopPokracujC
+
+	;------------Vypis--------------
+	VypisVystup:
+		call Crlf
+		mWrite "Pocet okresov, ktore maju aspon 50000 obyvatelov: "
+		movzx EAX, VysledokA
+		call WriteInt
+		call Crlf
+
+		fild VysledokC
+		fild PocetMiest
+		fdiv
+
+		fild Sto
+		fmul
+
+		call WriteFloat
+		mWrite " % okresov Zilinskeho kraja tvoria okresy nad 50000"
+		call Crlf
+
+		exit
+main ENDP
+
+END main
+
+	
